@@ -171,17 +171,10 @@
       <h3>🤖 Ask Xafarii AI</h3>
       <p>Grounded in scored evidence only. Powered by Groq (Llama 3.3 70B).</p>
     </div>
-    <div class="groq-status" id="keySetup">
-      <input type="password" id="keyInput"
-        placeholder="Paste Groq API key to activate chat"
-        style="flex:1;padding:6px 10px;background:#1E2D42;border:1px solid #334155;border-radius:6px;color:#F8F9FA;font-size:11px;font-family:'Inter',sans-serif;outline:none;" />
-      <button onclick="setKey()"
-        style="padding:6px 12px;background:#E5C494;color:#0F1A2C;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
-        Activate
-      </button>
-    </div>
-    <div id="keyActive" style="display:none;padding:8px 20px;">
-      <span style="color:#4ADE80;font-size:11px;font-weight:600;">✅ AI chat activated</span>
+    <div class="groq-status">
+      <div class="status-dot"></div>
+      <span class="status-text">Live</span>
+      <span class="status-model">· Llama-3.3-70b-versatile · Groq inference</span>
     </div>
 
     <div class="chat-messages" id="chatMessages">
@@ -214,31 +207,10 @@
 
 <script>
 // ── GROQ CONFIG ─────────────────────────────────────────────────────────────
-// Store the key in browser localStorage instead of hardcoding it in the source.
-const GROQ_API_KEY = localStorage.getItem("xafarii_groq_key") || "";
-window.GROQ_KEY = GROQ_API_KEY;
+// IMPORTANT: Replace this with your actual Groq API key before deploying
+// Get a free key at console.groq.com (no credit card required)
+const GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE";
 const GROQ_MODEL   = "llama-3.3-70b-versatile";
-
-function setKey() {
-  const key = document.getElementById("keyInput").value.trim();
-  if (!key.startsWith("gsk_")) {
-    alert("Please enter a valid Groq API key (starts with gsk_)");
-    return;
-  }
-  localStorage.setItem("xafarii_groq_key", key);
-  window.GROQ_KEY = key;
-  document.getElementById("keySetup").style.display = "none";
-  document.getElementById("keyActive").style.display = "block";
-}
-
-if (window.GROQ_KEY && window.GROQ_KEY.startsWith("gsk_")) {
-  document.addEventListener("DOMContentLoaded", () => {
-    const setup = document.getElementById("keySetup");
-    const active = document.getElementById("keyActive");
-    if (setup) setup.style.display = "none";
-    if (active) active.style.display = "block";
-  });
-}
 
 // ── DATASET ──────────────────────────────────────────────────────────────────
 const BUSINESSES = [
@@ -324,12 +296,6 @@ async function sendMessage() {
   const msg = input.value.trim();
   if (!msg) return;
 
-  const activeKey = window.GROQ_KEY || GROQ_API_KEY;
-  if (!activeKey || !activeKey.startsWith("gsk_")) {
-    addMsg("bot", "Please activate your Groq API key first by pasting it into the key field above.");
-    return;
-  }
-
   addMsg("user", msg);
   input.value = "";
   chatHistory.push({role:"user", content:msg});
@@ -342,7 +308,7 @@ async function sendMessage() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${activeKey}`
+        "Authorization": `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
@@ -387,6 +353,160 @@ function addMsg(role, text, typing=false) {
 function removeMsg(id){ const el=document.getElementById(id); if(el)el.remove(); }
 
 // ── SEARCH ────────────────────────────────────────────────────────────────
+// ── LAGOS PROXIMITY MAP ───────────────────────────────────────────────────
+// Maps any Lagos neighbourhood/alias to the dataset location zones:
+// "lekki", "victoria island", "ikoyi", "yaba"
+// Based on real geographic proximity and how Lagosians refer to areas
+
+const LOCATION_PROXIMITY = {
+  // ── LEKKI CORRIDOR ────────────────────────────────────────────
+  "lekki":                    ["lekki"],
+  "lekki phase 1":            ["lekki"],
+  "lekki phase1":             ["lekki"],
+  "lekki 1":                  ["lekki"],
+  "lekki phase 2":            ["lekki"],
+  "lekki phase2":             ["lekki"],
+  "chevron":                  ["lekki"],
+  "chevron drive":            ["lekki"],
+  "ikate":                    ["lekki"],
+  "ikate elegushi":           ["lekki"],
+  "agungi":                   ["lekki"],
+  "idado":                    ["lekki"],
+  "jakande":                  ["lekki"],
+  "ilasan":                   ["lekki"],
+  "ajah":                     ["lekki"],
+  "abraham adesanya":         ["lekki"],
+  "vgc":                      ["lekki"],
+  "victoria garden city":     ["lekki"],
+  "sangotedo":                ["lekki"],
+  "ogombo":                   ["lekki"],
+  "awoyaya":                  ["lekki"],
+  "lakowe":                   ["lekki"],
+  "abijo":                    ["lekki"],
+  "epe":                      ["lekki"],
+  "ibeju":                    ["lekki"],
+  "ibeju lekki":              ["lekki"],
+  "orchid":                   ["lekki"],
+  "orchid road":              ["lekki"],
+  "lafiaji":                  ["lekki"],
+  "osapa":                    ["lekki"],
+  "osapa london":             ["lekki"],
+  "megamound":                ["lekki"],
+  "pinnock":                  ["lekki"],
+  "pinnock beach":            ["lekki"],
+  "lekki conservation":       ["lekki"],
+  "elegushi":                 ["lekki"],
+  "elegushi beach":           ["lekki"],
+
+  // ── VICTORIA ISLAND ───────────────────────────────────────────
+  "victoria island":          ["victoria island"],
+  "vi":                       ["victoria island"],
+  "v.i":                      ["victoria island"],
+  "v.i.":                     ["victoria island"],
+  "eko atlantic":             ["victoria island"],
+  "ahmadu bello":             ["victoria island"],
+  "bar beach":                ["victoria island"],
+  "adeola odeku":             ["victoria island"],
+  "ligali ayorinde":          ["victoria island"],
+  "ozumba mbadiwe":           ["victoria island"],
+  "ozumba":                   ["victoria island"],
+  "oniru":                    ["victoria island", "lekki"],
+  "oniru estate":             ["victoria island", "lekki"],
+  "alpha beach":              ["victoria island", "lekki"],
+  "kuramo":                   ["victoria island"],
+  "kuramo waters":            ["victoria island"],
+  "eko hotel":                ["victoria island"],
+  "tiamiyu savage":           ["victoria island"],
+  "bishop aboyade":           ["victoria island"],
+  "sanusi fafunwa":           ["victoria island"],
+
+  // ── IKOYI ─────────────────────────────────────────────────────
+  "ikoyi":                    ["ikoyi"],
+  "banana island":            ["ikoyi"],
+  "old ikoyi":                ["ikoyi"],
+  "new ikoyi":                ["ikoyi"],
+  "awolowo road":             ["ikoyi"],
+  "bourdillon":               ["ikoyi"],
+  "bourdillon road":          ["ikoyi"],
+  "alfred rewane":            ["ikoyi"],
+  "osborne":                  ["ikoyi"],
+  "osborne road":             ["ikoyi"],
+  "osborne foreshore":        ["ikoyi"],
+  "falomo":                   ["ikoyi"],
+  "waterfront":               ["ikoyi"],
+  "ikoyi club":               ["ikoyi"],
+  "parkview":                 ["ikoyi"],
+  "parkview estate":          ["ikoyi"],
+  "alexander":                ["ikoyi"],
+  "kingsway":                 ["ikoyi"],
+  "gerrard":                  ["ikoyi"],
+  "gerrard road":             ["ikoyi"],
+  "queens drive":             ["ikoyi"],
+  "lugard":                   ["ikoyi"],
+  "lugard avenue":            ["ikoyi"],
+  "glover":                   ["ikoyi"],
+  "glover road":              ["ikoyi"],
+
+  // ── AREAS BETWEEN IKOYI & VI ──────────────────────────────────
+  "obalende":                 ["ikoyi", "victoria island"],
+  "five cowries":             ["ikoyi", "victoria island"],
+  "catholic mission":         ["victoria island"],
+  "race course":              ["ikoyi"],
+  "lagos island":             ["victoria island", "ikoyi"],
+  "marina":                   ["victoria island"],
+  "broad street":             ["victoria island"],
+  "tinubu":                   ["victoria island"],
+  "cms":                      ["victoria island"],
+
+  // ── YABA & MAINLAND ───────────────────────────────────────────
+  "yaba":                     ["yaba"],
+  "tejuosho":                 ["yaba"],
+  "jibowu":                   ["yaba"],
+  "herbert macaulay":         ["yaba"],
+  "university of lagos":      ["yaba"],
+  "unilag":                   ["yaba"],
+  "akoka":                    ["yaba"],
+  "iwaya":                    ["yaba"],
+  "abule ijesha":             ["yaba"],
+  "sabo":                     ["yaba"],
+  "surulere":                 ["yaba"],
+  "adeniran ogunsanya":       ["yaba"],
+  "aguda":                    ["yaba"],
+  "itire":                    ["yaba"],
+  "lawanson":                 ["yaba"],
+  "ojuelegba":                ["yaba"],
+  "bode thomas":              ["yaba"],
+  "shitta":                   ["yaba"],
+  "mushin":                   ["yaba"],
+  "ilupeju":                  ["yaba"],
+  "palmgrove":                ["yaba"],
+  "gbagada":                  ["yaba"],
+  "pedro":                    ["yaba"],
+  "bariga":                   ["yaba"],
+  "shomolu":                  ["yaba"],
+
+  // ── BROADER ISLAND (return all island results) ─────────────────
+  "island":                   ["lekki", "victoria island", "ikoyi"],
+  "lagos":                    ["lekki", "victoria island", "ikoyi", "yaba"],
+  "anywhere":                 ["lekki", "victoria island", "ikoyi", "yaba"],
+};
+
+function resolveLocation(input) {
+  const lower = input.toLowerCase().trim();
+  // Check proximity map first
+  if (LOCATION_PROXIMITY[lower]) {
+    return LOCATION_PROXIMITY[lower];
+  }
+  // Partial match — check if input appears in any key
+  for (const [key, zones] of Object.entries(LOCATION_PROXIMITY)) {
+    if (key.includes(lower) || lower.includes(key)) {
+      return zones;
+    }
+  }
+  // Fall back to direct string match against location field
+  return [lower];
+}
+
 function runRecommendation() {
   const loc = document.getElementById("loc").value.trim().toLowerCase();
   const minR = parseFloat(document.getElementById("minRating").value);
@@ -397,7 +517,11 @@ function runRecommendation() {
     return {...b,...s,tier:getTier(s.comp),flags:getFlags(b),evidence:getEv(b)};
   }).sort((a,b)=>b.comp-a.comp);
 
-  currentResults = all.filter(b=>b.location.toLowerCase().includes(loc)&&b.rating>=minR&&b.comp>=35);
+  const searchAreas = resolveLocation(loc);
+  currentResults = all.filter(b => {
+    const bLoc = b.location.toLowerCase();
+    return searchAreas.some(area => bLoc.includes(area)) && b.rating >= minR && b.comp >= 35;
+  });
 
   const sec = document.getElementById("resultsSection");
   const con = document.getElementById("resultsContainer");
@@ -405,11 +529,15 @@ function runRecommendation() {
   con.innerHTML = ""; sec.style.display = "block";
 
   if (!currentResults.length) {
-    con.innerHTML = `<p style="color:#64748B;padding:20px;">No results. Try a different location or lower the minimum rating.</p>`;
+    con.innerHTML = `<p style="color:#64748B;padding:20px;">No results found for "${loc}". Try broadening your search or lowering the minimum rating.</p>`;
     ttl.textContent = "No results found"; return;
   }
 
-  ttl.textContent = `${currentResults.length} Result${currentResults.length!==1?"s":""} — ${loc.charAt(0).toUpperCase()+loc.slice(1)} · Min ${minR.toFixed(1)}★`;
+  const isProximity = searchAreas.join(",") !== loc.toLowerCase();
+  const areaLabel = isProximity && loc.toLowerCase() !== "lagos" && loc.toLowerCase() !== "island"
+    ? `${loc.charAt(0).toUpperCase()+loc.slice(1)} & nearby areas (${searchAreas.map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(", ")})`
+    : loc.charAt(0).toUpperCase()+loc.slice(1);
+  ttl.textContent = `${currentResults.length} Result${currentResults.length!==1?"s":""} — ${areaLabel} · Min ${minR.toFixed(1)}★`;
 
   currentResults.forEach((b,i)=>{
     const card = document.createElement("div");
