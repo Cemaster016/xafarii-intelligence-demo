@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Xafarii — Business Intelligence & Recommendation Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #F8F9FA; color: #0F1A2C; }
+
+  .header { background: #0F1A2C; padding: 22px 40px; display: flex; align-items: center; gap: 16px; }
+  .header-logo { font-size: 28px; font-weight: 800; color: #E5C494; }
+  .header-logo span { color: #F3D9B1; font-size: 13px; font-weight: 400; display: block; margin-top: 2px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .header-tag { background: #E5C494; color: #0F1A2C; font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+  .powered-by { color: #64748B; font-size: 11px; }
+
+  .main { display: grid; grid-template-columns: 1fr 420px; gap: 0; min-height: calc(100vh - 72px); }
+
+  /* LEFT */
+  .left-panel { padding: 32px; overflow-y: auto; }
+  .search-card { background: #fff; border-radius: 14px; padding: 28px;
+    box-shadow: 0 2px 12px rgba(15,26,44,0.08); margin-bottom: 28px; }
+  .search-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .search-card p { font-size: 13px; color: #64748B; margin-bottom: 20px; }
+  .form-row { margin-bottom: 16px; }
+  .form-row label { display: block; font-size: 12px; font-weight: 600; color: #0F1A2C;
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .form-row input[type="text"] { width: 100%; padding: 10px 14px; border: 2px solid #E2E8F0;
+    border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif; outline: none; }
+  .form-row input[type="text"]:focus { border-color: #E5C494; }
+  .slider-row { display: flex; align-items: center; gap: 12px; }
+  .slider-row input[type="range"] { flex: 1; accent-color: #E5C494; }
+  .slider-val { background: #0F1A2C; color: #E5C494; font-weight: 700; font-size: 13px;
+    padding: 3px 10px; border-radius: 6px; min-width: 42px; text-align: center; }
+  .missing-box { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 11px; color: #991B1B; line-height: 1.6; }
+  .btn-search { width: 100%; padding: 12px; background: #E5C494; color: #0F1A2C;
+    font-size: 15px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; }
+  .btn-search:hover { background: #D4B07E; }
+
+  .results-title { font-size: 16px; font-weight: 700; margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 2px solid #E5C494; }
+  .card { background: #fff; border-radius: 12px; margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(15,26,44,0.07); overflow: hidden;
+    opacity: 0; transform: translateY(12px); animation: fadeUp 0.35s ease forwards; }
+  @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+  .card-header { background: #0F1A2C; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+  .card-rank { font-size: 18px; font-weight: 800; color: #E5C494; }
+  .card-name { font-size: 14px; font-weight: 700; color: #F3D9B1; flex: 1; }
+  .card-loc  { font-size: 11px; color: #94A3B8; }
+  .pill { padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .pill-green  { background:#DCFCE7; color:#166534; }
+  .pill-amber  { background:#FEF9C3; color:#854D0E; }
+  .pill-orange { background:#FFEDD5; color:#9A3412; }
+  .card-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .card-left  { padding: 16px 18px; border-right: 1px solid #F1F5F9; }
+  .card-right { padding: 16px 18px; }
+  .meta { display: flex; gap: 16px; margin-bottom: 14px; }
+  .meta-item { font-size: 11px; color: #64748B; }
+  .meta-item strong { color: #0F1A2C; font-size: 14px; display: block; }
+  .score-row { margin-bottom: 8px; }
+  .score-top { display: flex; justify-content: space-between; margin-bottom: 3px; }
+  .score-name { font-size: 11px; color: #0F1A2C; font-weight: 500; }
+  .score-val  { font-size: 11px; font-weight: 700; color: #0F1A2C; }
+  .bar-bg  { background: #F1F5F9; border-radius: 3px; height: 6px; }
+  .bar-fill { height: 100%; background: #E5C494; border-radius: 3px; }
+  .ev-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+  .ev-green { color: #166534; }
+  .ev-red   { color: #991B1B; }
+  .ev-item  { font-size: 11px; line-height: 1.6; margin-bottom: 3px; }
+  .ev-ok    { color: #166534; }
+  .ev-warn  { color: #991B1B; }
+  .ev-none  { color: #64748B; font-style: italic; font-size: 11px; }
+  .card-footer { background: #F3D9B1; padding: 8px 18px; }
+  .card-footer p { font-size: 10px; color: #92400E; font-style: italic; }
+
+  /* RIGHT — CHAT */
+  .chat-panel { background: #0F1A2C; display: flex; flex-direction: column;
+    border-left: 2px solid #E5C494; height: calc(100vh - 72px); position: sticky; top: 0; }
+  .chat-header { padding: 16px 20px; border-bottom: 1px solid #1E2D42; }
+  .chat-header h3 { color: #E5C494; font-size: 15px; font-weight: 700; }
+  .chat-header p  { color: #64748B; font-size: 11px; margin-top: 3px; }
+  .groq-status { padding: 8px 20px; border-bottom: 1px solid #1E2D42;
+    font-size: 11px; display: flex; align-items: center; gap: 8px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ADE80; flex-shrink: 0; }
+  .status-text { color: #4ADE80; font-weight: 600; }
+  .status-model { color: #64748B; }
+
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex;
+    flex-direction: column; gap: 12px; }
+  .msg { max-width: 88%; }
+  .msg-user { align-self: flex-end; }
+  .msg-bot  { align-self: flex-start; }
+  .msg-bubble { padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.6; }
+  .msg-user .msg-bubble { background: #E5C494; color: #0F1A2C; border-radius: 12px 12px 2px 12px; }
+  .msg-bot  .msg-bubble { background: #1E2D42; color: #F8F9FA; border-radius: 12px 12px 12px 2px; }
+  .msg-typing .msg-bubble { background: #1E2D42; color: #64748B; font-style: italic; }
+
+  .suggestions { padding: 0 20px 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .sug-btn { background: #1E2D42; color: #E5C494; border: 1px solid #334155;
+    border-radius: 16px; padding: 5px 12px; font-size: 11px; cursor: pointer;
+    font-family: 'Inter', sans-serif; }
+  .sug-btn:hover { background: #263548; }
+
+  .chat-input-row { padding: 16px 20px; border-top: 1px solid #1E2D42; display: flex; gap: 8px; }
+  .chat-input { flex: 1; padding: 10px 14px; background: #1E2D42; border: 1px solid #334155;
+    border-radius: 8px; color: #F8F9FA; font-size: 13px; font-family: 'Inter', sans-serif;
+    outline: none; resize: none; }
+  .chat-input::placeholder { color: #64748B; }
+  .chat-input:focus { border-color: #E5C494; }
+  .btn-send { padding: 10px 16px; background: #E5C494; color: #0F1A2C; border: none;
+    border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; }
+  .btn-send:hover { background: #D4B07E; }
+  .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .chat-panel { height: 500px; position: static; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">✕ Xafarii
+    <span>Business Intelligence & Recommendation Engine</span>
+  </div>
+  <div class="header-right">
+    <span class="powered-by">Powered by Groq · Llama 3.3 70B</span>
+    <div class="header-tag">AI-Powered · Live Demo</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT -->
+  <div class="left-panel">
+    <div class="search-card">
+      <h2>Find a Business</h2>
+      <p>Evidence-grounded recommendations. Every result is scored across 4 dimensions — Search Visibility, Authority & Trust, AI Visibility, and Recommendation Readiness.</p>
+      <div class="form-row">
+        <label>Location</label>
+        <input type="text" id="loc" placeholder="e.g. Lekki, Victoria Island, Ikoyi, Yaba" value="Lekki" />
+      </div>
+      <div class="form-row">
+        <label>Minimum Rating — <span id="ratingLabel">4.3</span></label>
+        <div class="slider-row">
+          <input type="range" id="minRating" min="4.0" max="5.0" step="0.1" value="4.3"
+            oninput="document.getElementById('ratingLabel').textContent=parseFloat(this.value).toFixed(1);
+                     document.getElementById('sliderBadge').textContent=parseFloat(this.value).toFixed(1);" />
+          <div class="slider-val" id="sliderBadge">4.3</div>
+        </div>
+      </div>
+      <div class="missing-box">
+        ⚠️ <strong>Missing from dataset:</strong> Price range · Family-friendliness · Cuisine type — the AI will never invent these. All gaps are disclosed explicitly.
+      </div>
+      <button class="btn-search" onclick="runRecommendation()">Find Recommendations</button>
+    </div>
+    <div id="resultsSection" style="display:none;">
+      <div class="results-title" id="resultsTitle"></div>
+      <div id="resultsContainer"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT — CHAT -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <h3>🤖 Ask Xafarii AI</h3>
+      <p>Grounded in scored evidence only. Powered by Groq (Llama 3.3 70B).</p>
+    </div>
+    <div class="groq-status" id="keySetup">
+      <input type="password" id="keyInput"
+        placeholder="Paste Groq API key to activate chat"
+        style="flex:1;padding:6px 10px;background:#1E2D42;border:1px solid #334155;border-radius:6px;color:#F8F9FA;font-size:11px;font-family:'Inter',sans-serif;outline:none;" />
+      <button onclick="setKey()"
+        style="padding:6px 12px;background:#E5C494;color:#0F1A2C;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
+        Activate
+      </button>
+    </div>
+    <div id="keyActive" style="display:none;padding:8px 20px;">
+      <span style="color:#4ADE80;font-size:11px;font-weight:600;">✅ AI chat activated</span>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg msg-bot">
+        <div class="msg-bubble">
+          👋 Hi! I'm Xafarii's AI assistant — powered by Groq's Llama 3.3 70B.<br/><br/>
+          I answer questions about businesses using <strong>only verified evidence from our intelligence engine</strong>. I never invent details about price, cuisine, or family-friendliness.<br/><br/>
+          Run a search on the left, then ask me anything about the results.
+        </div>
+      </div>
+    </div>
+
+    <div class="suggestions" id="suggestions">
+      <button class="sug-btn" onclick="useSuggestion(this)">Why is #1 ranked highest?</button>
+      <button class="sug-btn" onclick="useSuggestion(this)">Which has data quality issues?</button>
+      <button class="sug-btn" onclick="useSuggestion(this)">Explain the scoring system</button>
+      <button class="sug-btn" onclick="useSuggestion(this)">What data is missing?</button>
+      <button class="sug-btn" onclick="useSuggestion(this)">Is this place family friendly?</button>
+      <button class="sug-btn" onclick="useSuggestion(this)">Which is most affordable?</button>
+    </div>
+
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chatInput" rows="2"
+        placeholder="Ask about scores, evidence, flags, or data gaps..."
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+      <button class="btn-send" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── GROQ CONFIG ─────────────────────────────────────────────────────────────
+// Store the key in browser localStorage instead of hardcoding it in the source.
+const GROQ_API_KEY = localStorage.getItem("xafarii_groq_key") || "";
+window.GROQ_KEY = GROQ_API_KEY;
+const GROQ_MODEL   = "llama-3.3-70b-versatile";
+
+function setKey() {
+  const key = document.getElementById("keyInput").value.trim();
+  if (!key.startsWith("gsk_")) {
+    alert("Please enter a valid Groq API key (starts with gsk_)");
+    return;
+  }
+  localStorage.setItem("xafarii_groq_key", key);
+  window.GROQ_KEY = key;
+  document.getElementById("keySetup").style.display = "none";
+  document.getElementById("keyActive").style.display = "block";
+}
+
+if (window.GROQ_KEY && window.GROQ_KEY.startsWith("gsk_")) {
+  document.addEventListener("DOMContentLoaded", () => {
+    const setup = document.getElementById("keySetup");
+    const active = document.getElementById("keyActive");
+    if (setup) setup.style.display = "none";
+    if (active) active.style.display = "block";
+  });
+}
+
+// ── DATASET ──────────────────────────────────────────────────────────────────
+const BUSINESSES = [
+  {business:"Lekki Bistro House",location:"Lekki, Lagos",website:true,google_profile:true,instagram:true,facebook:false,rating:4.8,review_count:900,latest_review:"2026-07-20",website_close:"22:00",google_close:"20:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"High",ai_mentions_current:true},
+  {business:"Palm Grove Kitchen",location:"Lekki, Lagos",website:false,google_profile:true,instagram:true,facebook:true,rating:4.9,review_count:37,latest_review:"2026-08-01",website_close:null,google_close:"21:00",phone_consistent:true,nap_consistent:false,citation_strength:"High",ai_visibility:"Low",ai_mentions_current:false},
+  {business:"Harbour View Grill",location:"Victoria Island, Lagos",website:true,google_profile:true,instagram:true,facebook:false,rating:4.5,review_count:1200,latest_review:"2026-07-25",website_close:"23:00",google_close:"23:00",phone_consistent:false,nap_consistent:true,citation_strength:"Medium",ai_visibility:"High",ai_mentions_current:true},
+  {business:"Cedar & Spice",location:"Lekki, Lagos",website:true,google_profile:true,instagram:false,facebook:true,rating:4.7,review_count:214,latest_review:"2026-05-10",website_close:"22:00",google_close:"22:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"Medium",ai_mentions_current:true},
+  {business:"Mama T's Kitchen",location:"Yaba, Lagos",website:false,google_profile:true,instagram:true,facebook:false,rating:4.6,review_count:86,latest_review:"2026-07-30",website_close:null,google_close:"20:00",phone_consistent:true,nap_consistent:false,citation_strength:"Medium",ai_visibility:"Low",ai_mentions_current:false},
+  {business:"Urban Plate Lagos",location:"Lekki, Lagos",website:true,google_profile:true,instagram:true,facebook:false,rating:4.3,review_count:2400,latest_review:"2026-08-02",website_close:"22:00",google_close:"22:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"High",ai_mentions_current:true},
+  {business:"Savour House",location:"Lekki, Lagos",website:true,google_profile:true,instagram:true,facebook:true,rating:4.9,review_count:18,latest_review:"2026-07-28",website_close:"21:00",google_close:"19:00",phone_consistent:false,nap_consistent:true,citation_strength:"Medium",ai_visibility:"Low",ai_mentions_current:false},
+  {business:"Green Bowl Cafe",location:"Ikoyi, Lagos",website:true,google_profile:true,instagram:true,facebook:false,rating:4.4,review_count:520,latest_review:"2026-07-31",website_close:"18:00",google_close:"18:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"Medium",ai_mentions_current:true},
+  {business:"The Corner Table",location:"Lekki, Lagos",website:false,google_profile:true,instagram:false,facebook:true,rating:4.2,review_count:63,latest_review:"2026-06-01",website_close:null,google_close:"22:00",phone_consistent:false,nap_consistent:false,citation_strength:"Low",ai_visibility:"Low",ai_mentions_current:false},
+  {business:"Coastal Kitchen",location:"Victoria Island, Lagos",website:true,google_profile:true,instagram:true,facebook:false,rating:4.7,review_count:680,latest_review:"2026-07-29",website_close:"23:00",google_close:"23:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"High",ai_mentions_current:true},
+  {business:"Bamboo Yard",location:"Lekki, Lagos",website:true,google_profile:true,instagram:true,facebook:false,rating:4.8,review_count:74,latest_review:"2026-07-27",website_close:"22:00",google_close:"22:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"Medium",ai_mentions_current:false},
+  {business:"Spice Route",location:"Lekki, Lagos",website:false,google_profile:true,instagram:true,facebook:true,rating:4.6,review_count:310,latest_review:"2026-07-26",website_close:null,google_close:"22:00",phone_consistent:true,nap_consistent:true,citation_strength:"Medium",ai_visibility:"Medium",ai_mentions_current:true},
+  {business:"Lagos Table",location:"Ikoyi, Lagos",website:true,google_profile:true,instagram:true,facebook:false,rating:4.1,review_count:3100,latest_review:"2026-07-30",website_close:"22:00",google_close:"22:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"High",ai_mentions_current:true},
+  {business:"Olive & Ember",location:"Lekki, Lagos",website:true,google_profile:true,instagram:false,facebook:false,rating:4.9,review_count:45,latest_review:"2026-07-15",website_close:"21:00",google_close:"21:00",phone_consistent:true,nap_consistent:false,citation_strength:"Medium",ai_visibility:"Low",ai_mentions_current:false},
+  {business:"Market Lane Kitchen",location:"Lekki, Lagos",website:false,google_profile:true,instagram:true,facebook:false,rating:4.5,review_count:160,latest_review:"2026-07-22",website_close:null,google_close:"22:00",phone_consistent:true,nap_consistent:true,citation_strength:"High",ai_visibility:"Medium",ai_mentions_current:true},
+];
+
+const REF = new Date("2026-08-14");
+const dSince = d => Math.floor((REF-new Date(d))/86400000);
+const hConflict = b => { if(!b.website_close||!b.google_close)return false; const m=t=>{const[h,mm]=t.split(":").map(Number);return h*60+mm}; return Math.abs(m(b.website_close)-m(b.google_close))>60; };
+const svS = b => { let s=0; if(b.google_profile)s+=25; if(b.website)s+=15; if(b.instagram)s+=15; if(b.facebook)s+=10; s+=({High:25,Medium:15,Low:5}[b.citation_strength]||0); if(b.nap_consistent)s+=10; return Math.min(100,s); };
+const atS = b => { const d=dSince(b.latest_review),r=Math.max(0,(b.rating-4)/1)*50,v=Math.min(30,(Math.log10(b.review_count+1)/Math.log10(3500))*30),f=d<=30?20:d<=90?15:d<=180?10:5; let base=r+v+f; if(!b.phone_consistent||hConflict(b))base*=0.85; return Math.round(Math.min(100,base)*10)/10; };
+const avS = b => Math.min(100,({High:60,Medium:40,Low:10}[b.ai_visibility]||10)+(b.ai_mentions_current?40:0));
+const rrS = b => { const d=dSince(b.latest_review),e=b.review_count>=100?30:b.review_count>=50?20:10,n=b.nap_consistent?20:0,c=[b.google_profile,b.website,b.instagram,b.facebook].filter(Boolean).length,cs=c>=3?25:c===2?15:5,f=d<=30?25:d<=90?15:5; return Math.min(100,e+n+cs+f); };
+const compS = b => { const s=svS(b),a=atS(b),v=avS(b),r=rrS(b); return {sv:s,at:a,av:v,rr:r,comp:Math.round((s*.2+a*.3+v*.2+r*.3)*10)/10}; };
+const getTier = s => s>=75?{l:"RECOMMEND WITH CONFIDENCE",c:"pill-green"}:s>=55?{l:"RECOMMEND WITH CAVEAT",c:"pill-amber"}:{l:"SURFACE WITH DISCLAIMER",c:"pill-orange"};
+const getFlags = b => { const f=[]; if(!b.nap_consistent)f.push("NAP inconsistency detected"); if(hConflict(b))f.push(`Hours conflict: website ${b.website_close} vs Google ${b.google_close}`); if(b.review_count<50)f.push(`Low review volume (${b.review_count}) — rating may not be statistically reliable`); if(dSince(b.latest_review)>90)f.push(`Last reviewed ${dSince(b.latest_review)} days ago — data may be stale`); return f; };
+const getEv = b => { const e=[]; if(b.google_profile)e.push("Google Business Profile present"); if(b.nap_consistent)e.push("NAP consistent across listings"); if(b.citation_strength==="High")e.push("High citation authority"); if(b.ai_mentions_current)e.push("Currently mentioned by AI assistants"); if(b.review_count>=100)e.push(`${b.review_count.toLocaleString()} verified reviews`); return e; };
+
+let currentResults = [];
+let chatHistory = [];
+
+// ── SYSTEM PROMPT ─────────────────────────────────────────────────────────
+function buildSystemPrompt() {
+  const data = currentResults.length
+    ? currentResults.map((b,i)=>{
+        const s=compS(b), flags=getFlags(b);
+        return `#${i+1} ${b.business} (${b.location})
+  Rating: ${b.rating} | Reviews: ${b.review_count} | Days since review: ${dSince(b.latest_review)}
+  Composite: ${s.comp} | SV: ${s.sv} | AT: ${s.at} | AV: ${s.av} | RR: ${s.rr}
+  Tier: ${getTier(s.comp).l}
+  NAP Consistent: ${b.nap_consistent} | Phone Consistent: ${b.phone_consistent}
+  Citation: ${b.citation_strength} | AI Visibility: ${b.ai_visibility}
+  AI Mentioned: ${b.ai_mentions_current}
+  Flags: ${flags.length?flags.join("; "):"None"}`;
+      }).join("\n\n")
+    : "No search results yet. Ask the user to run a search first.";
+
+  return `You are Xafarii's AI business intelligence assistant, powered by Groq's Llama 3.3 70B.
+
+CORE RULES — follow these without exception:
+1. Answer ONLY from the scored evidence provided below. Never use your training knowledge about specific restaurants.
+2. When asked about price range — say clearly: "Price range is not in our dataset and cannot be confirmed."
+3. When asked about family-friendliness — say clearly: "Family-friendliness data is not available in our dataset."
+4. When asked about cuisine type — say clearly: "Cuisine type is not available — only the general 'Restaurant' category is known."
+5. Always cite specific scores, review counts, and flags when making claims.
+6. Be concise, honest, and helpful. State uncertainty clearly.
+7. Explain the scoring system when asked: Composite = SV×20% + AT×30% + AV×20% + RR×30%
+8. AT score applies ×0.85 contradiction discount for hours conflicts or phone inconsistency.
+9. The Recommendation Readiness (RR) score gates evidence quality — a 4.9 rating from 18 reviews scores lower than a 4.3 from 2,400 reviews because volume matters.
+
+CURRENT SEARCH RESULTS:
+${data}
+
+MISSING DATA (NEVER INVENT THESE):
+- Price range: NOT in dataset
+- Family-friendliness: NOT in dataset
+- Cuisine type: NOT in dataset
+- Operating days: NOT in dataset`;
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────────────
+function useSuggestion(btn) {
+  document.getElementById("chatInput").value = btn.textContent;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById("chatInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const activeKey = window.GROQ_KEY || GROQ_API_KEY;
+  if (!activeKey || !activeKey.startsWith("gsk_")) {
+    addMsg("bot", "Please activate your Groq API key first by pasting it into the key field above.");
+    return;
+  }
+
+  addMsg("user", msg);
+  input.value = "";
+  chatHistory.push({role:"user", content:msg});
+
+  const typId = addMsg("bot","Thinking...", true);
+  document.getElementById("sendBtn").disabled = true;
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${activeKey}`
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          {role:"system", content: buildSystemPrompt()},
+          ...chatHistory
+        ],
+        max_tokens: 800,
+        temperature: 0.3
+      })
+    });
+
+    const data = await res.json();
+    removeMsg(typId);
+
+    if (data.error) {
+      addMsg("bot", `⚠️ Error: ${data.error.message}. Check the Groq API key in the source.`);
+    } else {
+      const reply = data.choices[0].message.content;
+      addMsg("bot", reply);
+      chatHistory.push({role:"assistant", content:reply});
+      if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+    }
+  } catch(err) {
+    removeMsg(typId);
+    addMsg("bot", "⚠️ Connection error. Please check the Groq API key in the page source.");
+  }
+  document.getElementById("sendBtn").disabled = false;
+}
+
+let mid = 0;
+function addMsg(role, text, typing=false) {
+  const id = `m${++mid}`;
+  const d = document.createElement("div");
+  d.id = id; d.className = `msg msg-${role}${typing?" msg-typing":""}`;
+  d.innerHTML = `<div class="msg-bubble">${text.replace(/\n/g,"<br/>").replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")}</div>`;
+  const msgs = document.getElementById("chatMessages");
+  msgs.appendChild(d);
+  msgs.scrollTop = 9999;
+  return id;
+}
+function removeMsg(id){ const el=document.getElementById(id); if(el)el.remove(); }
+
+// ── SEARCH ────────────────────────────────────────────────────────────────
+function runRecommendation() {
+  const loc = document.getElementById("loc").value.trim().toLowerCase();
+  const minR = parseFloat(document.getElementById("minRating").value);
+  document.getElementById("sliderBadge").textContent = minR.toFixed(1);
+
+  const all = BUSINESSES.map(b=>{
+    const s=compS(b);
+    return {...b,...s,tier:getTier(s.comp),flags:getFlags(b),evidence:getEv(b)};
+  }).sort((a,b)=>b.comp-a.comp);
+
+  currentResults = all.filter(b=>b.location.toLowerCase().includes(loc)&&b.rating>=minR&&b.comp>=35);
+
+  const sec = document.getElementById("resultsSection");
+  const con = document.getElementById("resultsContainer");
+  const ttl = document.getElementById("resultsTitle");
+  con.innerHTML = ""; sec.style.display = "block";
+
+  if (!currentResults.length) {
+    con.innerHTML = `<p style="color:#64748B;padding:20px;">No results. Try a different location or lower the minimum rating.</p>`;
+    ttl.textContent = "No results found"; return;
+  }
+
+  ttl.textContent = `${currentResults.length} Result${currentResults.length!==1?"s":""} — ${loc.charAt(0).toUpperCase()+loc.slice(1)} · Min ${minR.toFixed(1)}★`;
+
+  currentResults.forEach((b,i)=>{
+    const card = document.createElement("div");
+    card.className = "card"; card.style.animationDelay = `${i*0.07}s`;
+    const fHtml = b.flags.length
+      ? b.flags.map(f=>`<div class="ev-item ev-warn">⚠️ ${f}</div>`).join("")
+      : `<div class="ev-none">No issues detected</div>`;
+    const eHtml = b.evidence.slice(0,4).map(e=>`<div class="ev-item ev-ok">✅ ${e}</div>`).join("");
+    const bar = (n,v) => `<div class="score-row"><div class="score-top"><span class="score-name">${n}</span><span class="score-val">${v}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${v}%"></div></div></div>`;
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-rank">#${i+1}</div>
+        <div><div class="card-name">${b.business}</div><div class="card-loc">📍 ${b.location}</div></div>
+        <div class="pill ${b.tier.c}">${b.comp} · ${b.tier.l}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-left">
+          <div class="meta">
+            <div class="meta-item"><strong>⭐ ${b.rating}</strong>Rating</div>
+            <div class="meta-item"><strong>${b.review_count.toLocaleString()}</strong>Reviews</div>
+            <div class="meta-item"><strong>${dSince(b.latest_review)}d</strong>Ago</div>
+          </div>
+          ${bar("Search Visibility",b.sv)}${bar("Authority & Trust",b.at)}${bar("AI Visibility",b.av)}${bar("Rec Readiness",b.rr)}
+        </div>
+        <div class="card-right">
+          <div class="ev-label ev-green">Evidence</div>${eHtml}
+          <br/><div class="ev-label ev-red">Flags</div>${fHtml}
+        </div>
+      </div>
+      <div class="card-footer"><p>⚠️ Price · Family-friendliness · Cuisine: NOT in dataset. AI will never invent these.</p></div>`;
+    con.appendChild(card);
+  });
+
+  // Auto-trigger chat summary
+  setTimeout(() => {
+    const autoMsg = `I just searched for restaurants in ${loc} with min rating ${minR.toFixed(1)}. I got ${currentResults.length} results. Give me a brief summary of the top 3 and any important caveats.`;
+    chatHistory.push({role:"user", content:autoMsg});
+    document.getElementById("chatInput").value = autoMsg;
+    sendMessage();
+  }, 600);
+
+  sec.scrollIntoView({behavior:"smooth"});
+}
+</script>
+</body>
+</html>
